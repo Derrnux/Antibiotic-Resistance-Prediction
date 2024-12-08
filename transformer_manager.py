@@ -17,9 +17,11 @@ class Transformer:
         self.embed_dim = embed_dim
         self.dim_feedforward = dim_feedforward
         self.balancing_method = balancing_method
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         self.prepare_data()
         self.model = SEQClassifier(self.vocab_size, embed_dim = self.embed_dim, attention_layers = self.attention_layers, dim_feedforward = self.dim_feedforward)
+        self.model.to(self.device)
 
     def prepare_data(self):
         data = SEQData()
@@ -54,6 +56,7 @@ class Transformer:
             total_loss = 0
 
             for sequences, labels in self.train_loader:
+                sequences, labels = sequences.to(self.device), labels.to(self.device)
                 optimizer.zero_grad()
                 outputs = self.model(sequences)
                 loss = loss_fn(outputs, labels)
@@ -71,11 +74,12 @@ class Transformer:
 
         with torch.no_grad():
             for sequences, labels in self.test_loader:
+                sequences, labels = sequences.to(self.device), labels.to(self.device)
                 outputs = self.model(sequences)
                 preds = torch.argmax(torch.nn.functional.softmax(outputs, dim=1), dim=1)
                 
-                all_preds.extend(preds.numpy())
-                all_labels.extend(labels.numpy())
+                all_preds.extend(preds.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
         
         print(f'Labels:      {all_labels}')
         print(f'Predictions: {all_preds}')
