@@ -1,8 +1,8 @@
 import random
 
 class Balancing:
-    def __init__(self):
-        random.seed(42)
+    def __init__(self, seed):
+        random.seed(seed)
 
     def oversample_data(self, sequences, labels):
         class_0 = [(seq, label) for seq, label in zip(sequences, labels) if label == 0]

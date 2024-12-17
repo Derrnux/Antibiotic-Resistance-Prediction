@@ -7,9 +7,10 @@ from classifier import SEQClassifier
 from collections import Counter
 from sklearn.metrics import classification_report
 import torch
+import random
 
 class Transformer:
-    def __init__(self, k_mers_type, attention_layers, batch_size, balancing_method, embed_dim, dim_feedforward):
+    def __init__(self, k_mers_type, attention_layers, batch_size, balancing_method, embed_dim, dim_feedforward, seed):
         self.tokenizer = SEQTokenizer_Kmers(k_mers_type)
         self.class_weights = torch.tensor([1.0, 1.0])
         self.attention_layers = attention_layers
@@ -18,10 +19,21 @@ class Transformer:
         self.dim_feedforward = dim_feedforward
         self.balancing_method = balancing_method
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.seed = seed
 
+        self.set_seed(self.seed)
         self.prepare_data()
         self.model = SEQClassifier(self.vocab_size, embed_dim = self.embed_dim, attention_layers = self.attention_layers, dim_feedforward = self.dim_feedforward)
         self.model.to(self.device)
+
+    def set_seed(self, seed):
+        random.seed(seed)
+        torch.manual_seed(seed)
+        if self.device == 'cuda':
+            torch.cuda.manual_seed(seed)
+            torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
     def prepare_data(self):
         data = SEQData()
@@ -32,9 +44,9 @@ class Transformer:
         self.y_test = data.y_test
 
         if (self.balancing_method == 'oversampling'):
-            self.seq_train, self.y_train = Balancing().oversample_data(self.seq_train, self.y_train)
+            self.seq_train, self.y_train = Balancing(self.seed).oversample_data(self.seq_train, self.y_train)
         elif (self.balancing_method == 'undersampling'):
-            self.seq_train, self.y_train = Balancing().undersample_data(self.seq_train, self.y_train)
+            self.seq_train, self.y_train = Balancing(self.seed).undersample_data(self.seq_train, self.y_train)
         elif (self.balancing_method == 'class_weights'):
             class_counts = Counter(self.y_train)
             self.class_weights = torch.tensor([1.0 / class_counts[0], 1.0 / class_counts[1]])
