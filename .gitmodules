@@ -1,3 +1,6 @@
 [submodule "seminar-dlmb-2024-winter-public"]
 	path = seminar-dlmb-2024-winter-public
 	url = https://github.com/hzi-bifo/seminar-dlmb-2024-winter-public.git
+[submodule "DNABERT"]
+	path = DNABERT
+	url = https://github.com/jerryji1993/DNABERT.git
